@@ -22,7 +22,7 @@ export default function AddScreen() {
     const createdAt = new Date().toISOString().slice(0, 10);
 
     db.runSync(
-      `INSERT INTO expenses (title, amount, createAt, type, isDeleted)
+      `INSERT INTO expenses (title, amount, createdAt, type, isDeleted)
        VALUES (?, ?, ?, ?, 0)`,
       [title, amountNumber, createdAt, type]
     );
