@@ -1,24 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
-import ExpenseItem from "../components/ExpenseItem";
+import { router, useFocusEffect } from "expo-router";
+import { db } from "../database/db";
 import { Expense } from "../types/Expense";
-import { router } from "expo-router";
-
-const API_URL = "https://68e735df10e3f82fbf3e4f23.mockapi.io/ExpenseTracker";
+import { useCallback } from "react";
 
 export default function HomeScreen() {
   const [data, setData] = useState<Expense[]>([]);
 
-  const getData = async () => {
-    const res = await fetch(API_URL);
-    const json = await res.json();
-    setData(json);
+  const loadSQLiteData = () => {
+    const result = db.getAllSync<Expense>(
+      "SELECT * FROM expenses WHERE isDeleted = 0"
+    );
+    setData(result);
   };
 
-  useEffect(() => {
-    getData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadSQLiteData();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,8 +28,24 @@ export default function HomeScreen() {
 
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ExpenseItem item={item} />}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() =>
+              router.push({
+                pathname: "/edit/[id]",
+                params: { id: item.id.toString() },
+              })
+            }
+          >
+            <Text style={styles.textTitle}>{item.title}</Text>
+
+            <Text style={styles.textInfo}>
+              {item.amount} đ • {item.type} • {item.createAt}
+            </Text>
+          </TouchableOpacity>
+        )}
       />
 
       <TouchableOpacity
@@ -48,6 +66,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
   },
+  item: {
+    paddingVertical: 10,
+    borderBottomColor: "#ccc",
+    borderBottomWidth: 1,
+  },
+  textTitle: { fontSize: 16, fontWeight: "bold" },
+  textInfo: { fontSize: 12, color: "#666" },
   addBtn: {
     position: "absolute",
     right: 20,

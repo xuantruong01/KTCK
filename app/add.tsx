@@ -48,7 +48,7 @@ export default function AddScreen() {
 
       <TextInput
         ref={titleRef}
-        placeholder="Tên khoản chi"
+        placeholder="Them khoản chi"
         style={styles.input}
         value={title}
         onChangeText={setTitle}
