@@ -1,34 +1,50 @@
-import { View, Text, StyleSheet } from "react-native";
+import React from "react";
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { router } from "expo-router";
+import { db } from "../database/db";
 import { Expense } from "../types/Expense";
 
 export default function ExpenseItem({ item }: { item: Expense }) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.amount}>
-            {item.amount ? Number(item.amount).toLocaleString() + "₫" : "0₫"}
-        </Text>
+  const handleLongPress = () => {
+    Alert.alert(
+      "Xóa khoản chi?",
+      `Bạn có chắc muốn xóa "${item.title}"?`,
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: () => {
+            db.runSync(
+              "UPDATE expenses SET isDeleted = 1 WHERE id = ?",
+              [item.id]
+            );
+            Alert.alert("Đã xóa");
+          },
+        },
+      ]
+    );
+  };
 
-      <Text style={styles.date}>{item.createdAt}</Text>
-      <Text style={styles.type}>
-        {item.type === "Thu" ? "✅ Thu" : "❌ Chi"}
-      </Text>
-      <Text style={styles.create} >{item.createAt}</Text>
-    </View>
+  return (
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() =>
+        router.push({ pathname: "/edit/[id]", params: { id: item.id.toString() } })
+      }
+      onLongPress={handleLongPress}  // ✅ chạm lâu để xóa
+    >
+      <Text style={styles.title}>{item.title}</Text>
+      <Text>{item.amount} đ • {item.type} • {item.createdAt}</Text>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 10,
+  item: {
+    paddingVertical: 10,
+    borderBottomColor: "#ccc",
+    borderBottomWidth: 1,
   },
-  title: { fontSize: 18, fontWeight: "bold" },
-  amount: { color: "green", marginTop: 3 },
-  date: { color: "#666", fontStyle: "italic" },
-  type: { fontWeight: "bold", marginTop: 3 },
-  create: { fontWeight: "bold", marginTop: 3 },
+  title: { fontWeight: "bold", fontSize: 16 },
 });
